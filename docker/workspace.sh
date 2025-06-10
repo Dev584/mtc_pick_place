@@ -27,7 +27,7 @@ systemctl start mongod || echo "Warning: Could not start MongoDB service. This i
 systemctl enable mongod || echo "Warning: Could not enable MongoDB service. This is expected in some Docker environments."
 
 # Navigate to the workspace
-cd /root/ros2_ws/src
+cd /root/ws_moveit/src
 
 # Install warehouse_ros_mongo if not already present
 if [ ! -d "warehouse_ros_mongo" ]; then
@@ -46,7 +46,7 @@ if [ ! -d "moveit_task_constructor" ]; then
 fi
 
 # Navigate back to the workspace root
-cd /root/ros2_ws
+cd /root/ws_moveit
 
 # Install ROS2 dependencies for all packages
 echo "Installing ROS 2 dependencies..."
@@ -57,7 +57,7 @@ rosdep install -i --from-path src --rosdistro $ROS_DISTRO -y
 
 # Fix storage.cpp
 echo "Fixing storage.cpp..."
-cd /root/ros2_ws/src/moveit_task_constructor
+cd /root/ws_moveit/src/moveit_task_constructor
 if [ -f core/src/storage.cpp ]; then
     # Create backup
     cp core/src/storage.cpp core/src/storage.cpp.backup
@@ -76,7 +76,7 @@ if [ -f core/src/solvers/cartesian_path.cpp ]; then
     sed -i 's/moveit::core::JumpThreshold(props.get<double>("jump_threshold")), is_valid,/moveit::core::JumpThreshold::relative(props.get<double>("jump_threshold")), is_valid,/' core/src/solvers/cartesian_path.cpp || echo "Warning: Could not modify cartesian_path.cpp"
 fi
 
-cd /root/ros2_ws
+cd /root/ws_moveit
 
 # Fix PCL warning - this needs to come after rosdep install
 echo "Fixing PCL warnings..."

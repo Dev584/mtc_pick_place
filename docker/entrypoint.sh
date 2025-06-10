@@ -12,7 +12,7 @@ chmod 700 $XDG_RUNTIME_DIR
 
 # Set base paths for convenience
 # ROS_WS is the path to the ROS 2 workspace
-ROS_WS="/root/ros2_ws"
+ROS_WS="/root/ws_moveit"
 
 # SHARED_ROS2 is the path to shared ROS 2 files
 SHARED_ROS2="/root/shared/ros2"

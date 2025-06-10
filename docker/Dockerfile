@@ -56,11 +56,11 @@ RUN apt-get update && \
 
 # Create necessary directories
 RUN mkdir -p /etc/udev/rules.d && \
-    mkdir -p /root/ros2_ws/src/mycobot_ros2
+    mkdir -p /root/ws_moveit/src/mycobot_ros2
 
 # Copy the entire project into the container
 # Since we're using the parent directory as context, we can copy everything
-COPY . /root/ros2_ws/src/mycobot_ros2
+COPY . /root/ws_moveit/src/mycobot_ros2
 
 # Copy configuration files from docker directory
 # Note the docker/ prefix since we're in the parent context
@@ -80,7 +80,7 @@ WORKDIR /root
 RUN ./workspace.sh
 
 # Ensure the ROS 2 workspace is sourced in every new shell
-RUN echo "source /root/ros2_ws/install/setup.bash" >> /root/.bashrc
+RUN echo "source /root/ws_moveit/install/setup.bash" >> /root/.bashrc
 
 # Set the entrypoint for the container
 # This script will be run every time the container starts
