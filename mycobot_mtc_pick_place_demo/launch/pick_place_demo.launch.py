@@ -33,6 +33,7 @@ def generate_launch_description():
     # Launch configuration variables
     use_sim_time = LaunchConfiguration('use_sim_time')
     exe = LaunchConfiguration('exe')
+    num_objects  = LaunchConfiguration('num_objects')
 
     # Get the package share directory
     pkg_share_moveit_config_temp = FindPackageShare(package=package_name_moveit_config)
@@ -55,6 +56,12 @@ def generate_launch_description():
         default_value="mtc_node",
         description="The MoveIt Task Constructor node responsible for pick and place",
         choices=["mtc_node"])
+    
+    declare_num_objects = DeclareLaunchArgument(
+        'num_objects',
+        default_value='3',
+        description='How many objects to pick (from perception)'
+    )
 
     def configure_setup(context):
         """Configure MoveIt and create nodes with proper string conversions."""
@@ -109,6 +116,7 @@ def generate_launch_description():
                 moveit_config.to_dict(),
                 {'use_sim_time': use_sim_time},
                 {'start_state': {'content': initial_positions_file_path}},
+                {'num_objects': context.perform_substitution(num_objects)},
                 mtc_node_params_file_path,
             ],
         )
@@ -125,5 +133,7 @@ def generate_launch_description():
 
     # Add the setup and node creation
     ld.add_action(OpaqueFunction(function=configure_setup))
+
+    ld.add_action(declare_num_objects)
 
     return ld

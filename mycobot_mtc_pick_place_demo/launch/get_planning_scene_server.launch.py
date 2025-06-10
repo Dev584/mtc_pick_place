@@ -57,6 +57,12 @@ def generate_launch_description():
         name='use_sim_time',
         default_value='true',
         description='Use simulation (Gazebo) clock if true')
+    
+    declare_circle_max_clusters = DeclareLaunchArgument(
+        'circle_max_clusters',
+        default_value='3',
+        description='Maximum number of circle clusters to detect'
+    )
 
     # Start the GetPlanningSceneServer node
     start_get_planning_scene_server_cmd = Node(
@@ -65,7 +71,8 @@ def generate_launch_description():
         output="screen",
         parameters=[
             get_planning_scene_server_file_path,
-            {'use_sim_time': use_sim_time}
+            {'use_sim_time': use_sim_time},
+            {'circle_max_clusters': LaunchConfiguration('circle_max_clusters')},
         ],
     )
 
@@ -77,5 +84,7 @@ def generate_launch_description():
 
     # Add any actions
     ld.add_action(start_get_planning_scene_server_cmd)
+
+    ld.add_action(declare_circle_max_clusters)
 
     return ld
