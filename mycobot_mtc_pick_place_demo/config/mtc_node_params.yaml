@@ -3,6 +3,7 @@ mtc_node:
     # General parameters
     execute: false
     max_solutions: 25
+    num_objects: 3
 
     # Controller parameters
     controller_names:

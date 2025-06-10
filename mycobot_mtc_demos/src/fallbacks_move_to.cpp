@@ -89,7 +89,10 @@ int main(int argc, char** argv) {
 
   // Cartesian path planner (lowest computational requirements, best for straight-line paths with no obstacles)
   auto cartesian = std::make_shared<solvers::CartesianPath>();
-  cartesian->setJumpThreshold(2.0);
+  moveit::core::CartesianPrecision precision;
+  precision.translational = 2.0;  // [m]
+  precision.rotational    = 2.0;  // [rad]
+  cartesian->setPrecision(precision);
   RCLCPP_INFO(logger, "Cartesian path planner set up with jump threshold: 2.0");
 
   // Create PipelinePlanner for Pilz (moderate computational requirements, inherently considers obstacles)

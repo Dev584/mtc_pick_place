@@ -44,12 +44,12 @@ def process_ros2_controllers_config(context):
     # Define both source and install paths
     src_config_path = os.path.join(
         home,
-        'ros2_ws/src/mycobot_ros2/mycobot_moveit_config/config',
+        'ws_moveit/src/mycobot_ros2/mycobot_moveit_config/config',
         robot_name
     )
     install_config_path = os.path.join(
         home,
-        'ros2_ws/install/mycobot_moveit_config/share/mycobot_moveit_config/config',
+        'ws_moveit/install/mycobot_moveit_config/share/mycobot_moveit_config/config',
         robot_name
     )
 
