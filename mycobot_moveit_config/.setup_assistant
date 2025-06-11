@@ -5,6 +5,6 @@ moveit_setup_assistant_config:
   SRDF:
     relative_path: config/mycobot_280/mycobot_280.srdf
   CONFIG:
-    author_name: AutomaticAddison
-    author_email: addison@todo.com
+    author_name: Dev
+    author_email: shahdeven01@gmail.com
     generated_timestamp: 1734048000

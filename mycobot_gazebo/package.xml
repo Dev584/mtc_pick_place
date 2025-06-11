@@ -4,7 +4,7 @@
   <name>mycobot_gazebo</name>
   <version>0.0.0</version>
   <description>Gazebo simulation support for myCobot robots including worlds and launch files</description>
-  <maintainer email="automaticaddison@todo.com">ubuntu</maintainer>
+  <maintainer email="deven@todo.com">dev</maintainer>
   <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
