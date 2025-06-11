@@ -36,3 +36,4 @@ This guide will take you through the entire process of setting up and understand
 ![3D Point Cloud RViz](https://automaticaddison.com/wp-content/uploads/2024/12/800_3d-point-cloud.jpg)
 
 ![mycobot280_rviz](./mycobot_description/urdf/mycobot280_rviz.png)
+# mtc_pick_place
