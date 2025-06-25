@@ -47,6 +47,10 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/crop_box.h>
+// #include <image_transport/image_transport.hpp>
+// #include <cv_bridge/cv_bridge.hpp>
+// #include <opencv2/opencv.hpp>
+// #include <sensor_msgs/msg/camera_info.hpp>
 
 class GetPlanningSceneServer : public rclcpp::Node {
  public:

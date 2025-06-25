@@ -6,8 +6,6 @@
  * It sets up a node, creates a MoveGroupInterface for the arm, sets a target pose for the gripper_base,
  * plans a trajectory, and executes the planned motion.
  *
- * @author Addison Sears-Collins
- * @date December 15, 2024
  */
 
 #include <geometry_msgs/msg/pose_stamped.hpp>

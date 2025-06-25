@@ -6,8 +6,6 @@
  * creates a collision object in the scene, plans a motion to a target pose while avoiding
  * the collision object, and executes the planned motion.
  *
- * @author Addison Sears-Collins
- * @date December 15, 2024
  */
 
 #include <moveit/move_group_interface/move_group_interface.hpp>

@@ -29,8 +29,6 @@
  * Topics Published:
  * - Various topics for trajectory execution and visualization (specific topics depend on MoveIt configuration)
  *
- * @author Addison Sears-Collins
- * @date December 20, 2024
  */
 
 // Include necessary ROS 2 and MoveIt headers
@@ -202,7 +200,6 @@ MTCTaskNode::MTCTaskNode(const rclcpp::NodeOptions& options)
   declare_parameter("place_pose_z_offset_factor", 0.5, "Factor to multiply object height for place pose Z offset");
   declare_parameter("retreat_min_distance", 0.025, "Minimum distance for retreat motion");
   declare_parameter("retreat_max_distance", 0.25, "Maximum distance for retreat motion");
-  declare_parameter("num_objects", 1, "How many objects to detect & pick");
 
   RCLCPP_INFO(this->get_logger(), "All parameters have been declared with descriptions");
 

@@ -11,10 +11,12 @@ find_package(moveit_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetPlanningScene.srv"
-  DEPENDENCIES moveit_msgs sensor_msgs
+  "msg/DetectedObject.msg"
+  DEPENDENCIES moveit_msgs sensor_msgs geometry_msgs
 )
 
 if(BUILD_TESTING)

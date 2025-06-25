@@ -241,7 +241,6 @@ segmentPlaneAndObjects(
 
   if (!found_valid_plane) {
     LOG_ERROR("No valid plane model found.");
-    LOG_ERROR("No valid plane model found.");
     // Add more detailed diagnostics
     LOG_ERROR("Please check z_tolerance (" << z_tolerance << ") and angle_tolerance ("
               << angle_tolerance << ") parameters");

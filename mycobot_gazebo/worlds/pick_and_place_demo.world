@@ -52,6 +52,18 @@
       <pose>0.22 0.12 0.175 0 0 0</pose>
     </include>
 
+    <include>
+      <uri>model://green_cylinder</uri>
+      <name>green_cylinder</name>
+      <pose>0.3  0.12 0.175 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://yellow_cylinder</uri>
+      <name>yellow_cylinder</name>
+      <pose>0.15 0.12 0.175 0 0 0</pose>
+    </include>
+
     <!-- Include the other objects -->
 
     <include>

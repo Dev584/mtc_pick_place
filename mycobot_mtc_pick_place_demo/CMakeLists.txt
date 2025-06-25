@@ -27,10 +27,20 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(generate_parameter_library REQUIRED)
 find_package(moveit_common REQUIRED)
+# find_package(OpenCV REQUIRED)
+# find_package(image_transport REQUIRED)
+# find_package(cv_bridge REQUIRED)
+# find_package(sensor_msgs REQUIRED)
+# find_package(geometry_msgs REQUIRED)
+# find_package(mtc_pick_place_msgs REQUIRED)
 moveit_package()
 
 # Define required packages (alphabetical order)
 set(REQUIRED_PACKAGES
+  OpenCV
+  cv_bridge
+  geometry_msgs
+  image_transport
   moveit_core
   moveit_ros_planning
   moveit_ros_planning_interface
@@ -59,7 +69,7 @@ find_package(PCL REQUIRED COMPONENTS common features filters io kdtree search se
 set(dependencies ${REQUIRED_PACKAGES})
 
 # Include directories
-include_directories(include ${PCL_INCLUDE_DIRS})
+include_directories(include ${PCL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 # Add PCL definitions
 add_definitions(${PCL_DEFINITIONS})
@@ -120,6 +130,24 @@ target_link_libraries(get_planning_scene_server
 add_executable(mtc_node src/mtc_node.cpp)
 ament_target_dependencies(mtc_node ${dependencies})
 target_link_libraries(mtc_node get_planning_scene_client)
+
+## color_depth_detector
+
+
+add_executable(color_depth_detector src/color_depth_detector.cpp)
+ament_target_dependencies(color_depth_detector
+  rclcpp
+  image_transport
+  cv_bridge
+  sensor_msgs
+  geometry_msgs
+  mycobot_interfaces
+  OpenCV
+)
+install(
+  TARGETS color_depth_detector
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
 
 # Installation
 set(EXECUTABLES
