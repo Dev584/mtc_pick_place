@@ -55,6 +55,7 @@ set(REQUIRED_PACKAGES
   shape_msgs
   tf2_eigen
   tf2_geometry_msgs
+  tf2_ros
 )
 
 # Find required packages
