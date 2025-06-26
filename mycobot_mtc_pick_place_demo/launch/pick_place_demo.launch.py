@@ -111,7 +111,15 @@ def generate_launch_description():
             ],
         )
 
-        return [mtc_demo_node]
+        color_detector_node = Node(
+            package="mycobot_mtc_pick_place_demo",
+            executable="color_depth_detector",
+            output="screen",
+            parameters=[{'use_sim_time': use_sim_time}],
+        )
+
+        # return [mtc_demo_node]
+        return [mtc_demo_node, color_detector_node]
 
     # Create the launch description
     ld = LaunchDescription()

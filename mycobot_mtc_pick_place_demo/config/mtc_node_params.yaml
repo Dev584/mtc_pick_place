@@ -66,3 +66,9 @@ mtc_node:
     place_pose_z_offset_factor: 0.5
     retreat_min_distance: 0.025
     retreat_max_distance: 0.25
+
+     # Order in which colored cylinders should be picked
+    color_order:
+      - yellow
+      - red
+      - green
