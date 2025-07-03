@@ -123,6 +123,7 @@ private:
   std::string support_surface_id_;
   bool service_success_;
   // vision → MTC bridge
+  bool task_started_{false};
   rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr pose_sub_;
   tf2_ros::Buffer tf_buffer_{this->get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -220,7 +221,19 @@ MTCTaskNode::MTCTaskNode(const rclcpp::NodeOptions& options)
   planning_scene_client = std::make_shared<GetPlanningSceneClient>();
 
   // subscribe to the cylinder PoseArray
-  pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>("/detected_cylinders", 10, std::bind(&MTCTaskNode::posesCallback, this, std::placeholders::_1));
+  pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
+    "/detected_cylinders", rclcpp::QoS(10),
+    [this](const geometry_msgs::msg::PoseArray::SharedPtr msg) {
+      // 1) fill your poses
+      this->posesCallback(msg);
+
+      // 2) only once, kick off doTask() when you have data
+      if (!task_started_ && !cylinder_poses_.empty()) {
+        task_started_ = true;
+        this->doTask();
+      }
+    }
+  );
 }
 
 /**
@@ -352,16 +365,15 @@ void MTCTaskNode::doTask()
   RCLCPP_INFO(this->get_logger(), "Starting the pick and place task");
 
   // wait until we have at least one detected cylinder pose
-  rclcpp::Rate rate(10);
-  while (rclcpp::ok() && cylinder_poses_.empty()) {
-    RCLCPP_INFO(this->get_logger(), "Waiting for cylinder detections...");
-    rate.sleep();
-  }
+  // rclcpp::Rate rate(10);
+  // while (rclcpp::ok() && cylinder_poses_.empty()) {
+  //   RCLCPP_INFO(this->get_logger(), "Waiting for cylinder detections...");
+  //   rclcpp::spin_some(shared_from_this());
+  //   rate.sleep();
+  // }
   // take the first cylinder and set it as the object_pose parameter
   auto initial_poses = cylinder_poses_;
-  RCLCPP_INFO(this->get_logger(),
-              "Creating task using %zu initial detections",
-              initial_poses.size());
+  RCLCPP_INFO(this->get_logger(), "Creating task using %zu initial detections", initial_poses.size());
 
   task_ = createTask(initial_poses);
 

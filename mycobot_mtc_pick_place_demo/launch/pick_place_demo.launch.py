@@ -119,7 +119,7 @@ def generate_launch_description():
         )
 
         # return [mtc_demo_node]
-        return [mtc_demo_node, color_detector_node]
+        return [color_detector_node, mtc_demo_node]
 
     # Create the launch description
     ld = LaunchDescription()
