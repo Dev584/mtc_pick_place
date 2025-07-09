@@ -1,7 +1,4 @@
 #include <rclcpp/rclcpp.hpp>
-#include <vector>
-#include <memory>
-#include <chrono>
 #include <image_transport/image_transport.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -10,37 +7,38 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <mycobot_interfaces/msg/detected_object.hpp>
 
+#include <vector>
+#include <memory>
+
 struct Detection
 {
-  std::string   id;
-  cv::Rect      box;
-  cv::Point     centroid;
+  std::string id;
+  cv::Rect    box;
+  cv::Point   centroid;
 };
 
-// class ColorDepthDetector : public rclcpp::Node public std::enable_shared_from_this<ColorDepthDetector> {
-class ColorDepthDetector
-: public rclcpp::Node,
-  public std::enable_shared_from_this<ColorDepthDetector>
+class ColorDepthDetector : public rclcpp::Node
 {
 public:
   ColorDepthDetector();
 
 private:
   // Subscribers & publishers
-  image_transport::Subscriber                                           image_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr              depth_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr         info_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr        info_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr             depth_sub_;
+  image_transport::Subscriber                                          color_sub_;
   rclcpp::Publisher<mycobot_interfaces::msg::DetectedObject>::SharedPtr det_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr           pose_pub_;
-  image_transport::Publisher                                            debug_pub_;
-  std::shared_ptr<image_transport::ImageTransport>                      it_;
-  rclcpp::TimerBase::SharedPtr                                          init_timer_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr          pose_pub_;
+  image_transport::Publisher                                          debug_pub_;
 
-  // Camera intrinsics
+  // Transport (initialized in onInfo)
+  std::shared_ptr<image_transport::ImageTransport>                    it_;
+
+  // Intrinsics
   bool   has_info_{false};
-  float  fx_{0.0f}, fy_{0.0f}, cx_{0.0f}, cy_{0.0f};
+  float  fx_{0}, fy_{0}, cx_{0}, cy_{0};
 
-  // Detected blobs
+  // Latest color detections
   std::vector<Detection> detections_;
 
   // Callbacks
@@ -52,163 +50,149 @@ private:
 ColorDepthDetector::ColorDepthDetector()
 : Node("color_depth_detector")
 {
-  // Camera info for intrinsics
+  // 1) Camera info subscription
   info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "/camera_head/depth/camera_info", 10,
-    std::bind(&ColorDepthDetector::onInfo, this, std::placeholders::_1));
+    std::bind(&ColorDepthDetector::onInfo, this, std::placeholders::_1)
+  );
 
-  // Depth image
+  // 2) Depth image subscription
   depth_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
     "/camera_head/depth/image_rect_raw", 10,
-    std::bind(&ColorDepthDetector::onDepth, this, std::placeholders::_1));
+    std::bind(&ColorDepthDetector::onDepth, this, std::placeholders::_1)
+  );
 
-  // Publishers
+  // 3) Publishers for detected objects and poses
   det_pub_  = this->create_publisher<mycobot_interfaces::msg::DetectedObject>(
-    "/detected_objects", 10);
+    "/detected_objects", 10
+  );
   pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>(
-    "/detected_cylinders", 10);
-  // debug_pub_ = it_->advertise("/debug_image", 10);
-
-  init_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(0),
-    [this]() {
-      // safe to cast to shared_ptr now
-      auto base_node = rclcpp::Node::shared_from_this();
-      auto self = std::static_pointer_cast<ColorDepthDetector>(base_node);
-
-      // build transport & subscribe/publish
-      it_ = std::make_shared<image_transport::ImageTransport>(self);
-      image_sub_ = it_->subscribe(
-        "/camera_head/color/image_raw", 10,
-        std::bind(&ColorDepthDetector::onColor, self, std::placeholders::_1));
-      debug_pub_ = it_->advertise("/debug_image", 10);
-
-      // only run once
-      init_timer_->cancel();
-    });
+    "/detected_cylinders", 10
+  );
 }
 
 void ColorDepthDetector::onInfo(const sensor_msgs::msg::CameraInfo::SharedPtr msg)
 {
+  // Cache intrinsics once
   fx_ = msg->k[0];  fy_ = msg->k[4];
   cx_ = msg->k[2];  cy_ = msg->k[5];
   has_info_ = true;
+
+  // Only build ImageTransport _after_ node is fully constructed
+  if (!it_) {
+    auto base = rclcpp::Node::shared_from_this();
+    auto self = std::static_pointer_cast<ColorDepthDetector>(base);
+
+    it_ = std::make_shared<image_transport::ImageTransport>(self);
+
+    color_sub_ = it_->subscribe(
+      "/camera_head/color/image_raw", 10,
+      std::bind(&ColorDepthDetector::onColor, this, std::placeholders::_1)
+    );
+    debug_pub_ = it_->advertise("/debug_image", 10);
+
+    RCLCPP_INFO(get_logger(), "ImageTransport and color subscription initialized");
+  }
 }
 
 void ColorDepthDetector::onColor(const sensor_msgs::msg::Image::ConstSharedPtr &msg)
 {
-  RCLCPP_INFO(this->get_logger(), "onColor() received image (seq=%u)", msg->header.stamp.sec);
-  // convert color image to OpenCV Mat
-  if (!has_info_) return;
-  cv::Mat bgr = cv_bridge::toCvShare(msg, "bgr8")->image;
-  cv::Mat blur;
-  cv::GaussianBlur(bgr, blur, cv::Size(5, 5), 0);
-  cv::Mat hsv;
+  RCLCPP_DEBUG(get_logger(), "onColor()");
+  if (!has_info_) {
+    RCLCPP_WARN(get_logger(), "Skipping color until camera info arrives");
+    return;
+  }
+
+  // Convert to BGR and blur & HSV
+  auto bgr = cv_bridge::toCvShare(msg, "bgr8")->image;
+  cv::Mat blur, hsv;
+  cv::GaussianBlur(bgr, blur, cv::Size(5,5), 0);
   cv::cvtColor(blur, hsv, cv::COLOR_BGR2HSV);
 
-  // prepare detection list
-  std::vector<Detection> new_detections;
-
-  // define HSV ranges for colors
-  struct ColorRange { std::string id; cv::Scalar lower; cv::Scalar upper; };
+  // Define color ranges
+  struct ColorRange { std::string id; cv::Scalar lo, hi; };
   std::vector<ColorRange> ranges = {
-    {"red",    cv::Scalar(0, 120, 70),   cv::Scalar(10, 255, 255)},
-    {"red",    cv::Scalar(170, 120, 70), cv::Scalar(180, 255, 255)},
-    {"green",  cv::Scalar(35,  100, 100), cv::Scalar(85, 255, 255)},
-    {"yellow", cv::Scalar(20,  100, 100), cv::Scalar(30, 255, 255)}
+    {"red",    {  0,120, 70}, { 10,255,255}},
+    {"red",    {170,120, 70}, {180,255,255}},
+    {"green",  { 35,100,100}, { 85,255,255}},
+    {"yellow", { 20,100,100}, { 30,255,255}}
   };
 
-  for (const auto &range : ranges) {
+  std::vector<Detection> new_dets;
+  for (auto &r : ranges) {
     cv::Mat mask;
-    cv::inRange(hsv, range.lower, range.upper, mask);
-    // morphological cleanup
-    cv::erode(mask, mask, cv::Mat(), cv::Point(-1,-1), 2);
-    cv::dilate(mask, mask, cv::Mat(), cv::Point(-1,-1), 2);
+    cv::inRange(hsv, r.lo, r.hi, mask);
+    cv::erode(mask, mask, {}, cv::Point(-1,-1), 2);
+    cv::dilate(mask, mask, {}, cv::Point(-1,-1), 2);
 
-    // find contours
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
     if (contours.empty()) continue;
 
-    // find largest contour
-    auto max_it = std::max_element(contours.begin(), contours.end(),
-      [](const std::vector<cv::Point> &a, const std::vector<cv::Point> &b){
-        return cv::contourArea(a) < cv::contourArea(b);
-      });
-    auto &cnt = *max_it;
-    cv::Rect box = cv::boundingRect(cnt);
-    cv::Point centroid(box.x + box.width/2, box.y + box.height/2);
+    // Largest contour
+    auto best = *std::max_element(contours.begin(), contours.end(),
+      [](auto &a, auto &b){ return cv::contourArea(a) < cv::contourArea(b); });
+    cv::Rect box = cv::boundingRect(best);
+    cv::Point c{ box.x + box.width/2, box.y + box.height/2 };
 
-    // record detection
-    Detection d;
-    d.id = range.id;
-    d.box = box;
-    d.centroid = centroid;
-    new_detections.push_back(d);
+    new_dets.push_back({ r.id, box, c });
   }
 
-  // update detections_
-  detections_ = std::move(new_detections);
-  RCLCPP_INFO(this->get_logger(), "onColor(): found %zu blobs", detections_.size());
+  detections_ = std::move(new_dets);
+  RCLCPP_INFO(get_logger(), "Detected %zu color blobs", detections_.size());
 }
 
 void ColorDepthDetector::onDepth(const sensor_msgs::msg::Image::ConstSharedPtr &msg)
 {
-  RCLCPP_INFO(this->get_logger(), "onDepth() received depth (seq=%u)", msg->header.stamp.sec);
+  RCLCPP_DEBUG(get_logger(), "onDepth()");
   if (!has_info_) {
-    RCLCPP_WARN(this->get_logger(), "onDepth(): no camera info yet, skipping");  // ← log reason
+    RCLCPP_WARN(get_logger(), "Skipping depth until camera info arrives");
     return;
   }
   if (detections_.empty()) {
-    RCLCPP_WARN(this->get_logger(), "onDepth(): no detections to process, skipping");  // ← log reason
+    RCLCPP_WARN(get_logger(), "Skipping depth: no color detections");
     return;
   }
 
   // Convert depth image
   cv::Mat depth = cv_bridge::toCvCopy(msg)->image;
 
-  // Build a PoseArray with every detection
-  geometry_msgs::msg::PoseArray pose_array;
-  pose_array.header = msg->header;
-  pose_array.header.frame_id = "camera_link";
+  geometry_msgs::msg::PoseArray pa;
+  pa.header = msg->header;
+  pa.header.frame_id = "camera_head_link";
 
   for (auto &d : detections_) {
     float z = depth.at<float>(d.centroid.y, d.centroid.x);
     float x = (d.centroid.x - cx_) * z / fx_;
     float y = (d.centroid.y - cy_) * z / fy_;
 
-    // publish one DetectedObject per blob
+    // Publish per-object message
     mycobot_interfaces::msg::DetectedObject obj;
-    obj.id         = d.id;
-    obj.xmin       = d.box.x;
-    obj.ymin       = d.box.y;
-    obj.width      = d.box.width;
-    obj.height     = d.box.height;
+    obj.id     = d.id;
+    obj.xmin   = d.box.x;
+    obj.ymin   = d.box.y;
+    obj.width  = d.box.width;
+    obj.height = d.box.height;
     obj.position.x = x;
     obj.position.y = y;
     obj.position.z = z;
     det_pub_->publish(obj);
 
-    // add one Pose per blob
+    // Add to PoseArray
     geometry_msgs::msg::Pose p;
-    p.position.x    = x;
-    p.position.y    = y;
-    p.position.z    = z;
+    p.position.x = x;  p.position.y = y;  p.position.z = z;
     p.orientation.w = 1.0;
-    pose_array.poses.push_back(p);
+    pa.poses.push_back(p);
   }
 
-  // finally, publish them all at once
-  pose_pub_->publish(pose_array);
-
-  // clear for next cycle
+  pose_pub_->publish(pa);
   detections_.clear();
 }
 
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<ColorDepthDetector>();  // must be make_shared
+  auto node = std::make_shared<ColorDepthDetector>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
