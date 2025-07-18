@@ -27,13 +27,3 @@ This repository contains ROS 2 packages for simulating and controlling the myCob
 
 ![Setup Planning Scene](https://automaticaddison.com/wp-content/uploads/2024/12/creating-planning-scene-800.gif)
 
-## Getting Started
-For a complete step-by-step walkthrough on how to build this repository from scratch, start with this tutorial:
-[Create and Visualize a Robotic Arm with URDF](https://automaticaddison.com/create-and-visualize-a-robotic-arm-with-urdf-ros-2-jazzy/)
-
-This guide will take you through the entire process of setting up and understanding the mycobot_ros2 project.
-
-![3D Point Cloud RViz](https://automaticaddison.com/wp-content/uploads/2024/12/800_3d-point-cloud.jpg)
-
-![mycobot280_rviz](./mycobot_description/urdf/mycobot280_rviz.png)
-# mtc_pick_place
