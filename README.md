@@ -27,3 +27,6 @@ This repository contains ROS 2 packages for simulating and controlling the myCob
 
 ![Setup Planning Scene](https://automaticaddison.com/wp-content/uploads/2024/12/creating-planning-scene-800.gif)
 
+## Demo Video
+[Watch the pick-and-place demo](mycobot_mtc_pick_place_demo)
+
