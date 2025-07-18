@@ -31,5 +31,8 @@ This repository contains ROS 2 packages for simulating and controlling the myCob
 
 https://github.com/user-attachments/assets/b89c3e65-948f-41ce-aadc-c041d993f703
 
+This demo shows a robot arm autonomously performing a pick-and-place task for three color-coded cylinders: yellow, red, and green. The system uses a perception pipeline to detect the cylinders, generate multiple motion plans, and execute the most efficient one for each object.
+
+    Note: The cylinders may appear purple or differently colored in RVIZ. Internally, the logic still distinguishes them correctly using their detected color IDs.
 
 
