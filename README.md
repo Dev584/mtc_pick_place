@@ -29,7 +29,7 @@ This repository contains ROS 2 packages for simulating and controlling the myCob
 
 ## Pick-and-Place Simulation Demo
 
-![Watch the demo](https://github.com/user-attachments/assets/b89c3e65-948f-41ce-aadc-c041d993f703)
+https://github.com/user-attachments/assets/b89c3e65-948f-41ce-aadc-c041d993f703
 
 
 
